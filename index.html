@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Math Tug of War</title>
+  <meta name="description" content="A two-team same-screen mathematics competition with an animated central tug-of-war arena, configurable operations, independent question flows, and responsive controls." />
+  <meta property="og:title" content="Math Tug of War" />
+  <meta property="og:description" content="A two-team same-screen mathematics competition with an animated central tug-of-war arena." />
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+  <div id="announcer" class="sr-only" aria-live="assertive" aria-atomic="true"></div>
+
+  <!-- Header -->
+  <header>
+    <div class="brand-title">
+      <span aria-hidden="true">🪢</span>
+      <span>Tug War of Math</span>
+    </div>
+    <div class="header-actions">
+      <button id="btn-options" class="btn" aria-label="Game Options">
+        <span aria-hidden="true">⚙️</span> Options
+      </button>
+      <button id="btn-rules" class="btn" aria-label="Game Rules">
+        <span aria-hidden="true">📖</span> Rules
+      </button>
+      <button id="btn-sound" class="btn" aria-label="Toggle Sound" aria-pressed="true">
+        <span id="sound-icon" aria-hidden="true">🔊</span> <span id="sound-label">Sound On</span>
+      </button>
+      <button id="btn-hold-game" class="btn" aria-label="Hold or Pause Game" disabled title="Hold or Resume Match (Space / P)">
+        <span id="hold-icon" aria-hidden="true">⏸️</span> <span id="hold-label">Hold</span>
+      </button>
+      <button id="btn-reset-game" class="btn" style="color: #b91c1c;" aria-label="Reset Game" title="Reset Match to Ready Screen">
+        <span aria-hidden="true">🔄</span> Reset
+      </button>
+      <button id="btn-fullscreen" class="btn" aria-label="Toggle Fullscreen">
+        <span aria-hidden="true">⛶</span> Fullscreen
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Game Area -->
+  <main>
+    <div class="game-grid">
+      <!-- Blue Team Column -->
+      <section id="blue-panel" class="team-panel blue-theme" aria-labelledby="blue-team-heading">
+        <div class="team-header">
+          <div class="team-name-badge">
+            <span aria-hidden="true">🔵</span>
+            <span id="blue-display-name">Blue Team</span>
+          </div>
+          <div class="team-score-badge">
+            Score: <span id="blue-score">0</span>
+          </div>
+        </div>
+
+        <div class="progress-timer-row">
+          <span id="blue-progress-label">Question 1 of 15</span>
+          <span id="blue-timer" class="timer-badge" aria-label="Blue Team question timer">⏱️ 15s</span>
+        </div>
+
+        <div class="question-card">
+          <div id="blue-question-expr" class="math-expression">...</div>
+          <div class="answer-preview">
+            <span id="blue-input-text"></span>
+            <span id="blue-placeholder" class="answer-placeholder">Your answer</span>
+          </div>
+          <div id="blue-feedback" class="feedback-banner"></div>
+        </div>
+
+        <!-- Keypad -->
+        <div class="keypad-grid" role="group" aria-label="Blue Team Number Keypad">
+          <button type="button" class="key-btn blue-key" data-team="blue" data-val="1">1</button>
+          <button type="button" class="key-btn blue-key" data-team="blue" data-val="2">2</button>
+          <button type="button" class="key-btn blue-key" data-team="blue" data-val="3">3</button>
+          <button type="button" class="key-btn blue-key" data-team="blue" data-val="4">4</button>
+          <button type="button" class="key-btn blue-key" data-team="blue" data-val="5">5</button>
+          <button type="button" class="key-btn blue-key" data-team="blue" data-val="6">6</button>
+          <button type="button" class="key-btn blue-key" data-team="blue" data-val="7">7</button>
+          <button type="button" class="key-btn blue-key" data-team="blue" data-val="8">8</button>
+          <button type="button" class="key-btn blue-key" data-team="blue" data-val="9">9</button>
+          <button type="button" class="key-btn util-key blue-key" data-team="blue" data-action="clear">Clear</button>
+          <button type="button" class="key-btn blue-key" data-team="blue" data-val="0">0</button>
+          <button type="button" class="key-btn util-key blue-key" data-team="blue" data-action="backspace">⌫</button>
+        </div>
+
+        <div id="blue-sign-row" style="display: none; margin-top: 0.25rem;">
+          <button type="button" class="key-btn util-key blue-key" style="width: 100%;" data-team="blue" data-action="sign">± Toggle Negative</button>
+        </div>
+
+        <div class="action-row">
+          <button id="blue-btn-submit" type="button" class="btn btn-submit" disabled>Submit</button>
+          <button id="blue-btn-skip" type="button" class="btn btn-skip" disabled>Skip</button>
+        </div>
+
+        <div class="team-stats-row">
+          <span class="stat-pill">✓ <span id="blue-stat-correct">0</span></span>
+          <span class="stat-pill">✗ <span id="blue-stat-incorrect">0</span></span>
+          <span class="stat-pill">⏭ <span id="blue-stat-skipped">0</span></span>
+          <span class="stat-pill">⌛ <span id="blue-stat-timeout">0</span></span>
+          <span id="blue-status-tag" style="font-weight: 700;">Ready</span>
+        </div>
+      </section>
+
+      <!-- Center Arena Column -->
+      <section class="arena-container" aria-label="Tug of War Arena">
+        <div class="arena-header">
+          <div class="arena-status-title">
+            <span aria-hidden="true">⚔️</span>
+            <span>Match Arena</span>
+          </div>
+          <div class="elapsed-box">
+            Time: <span id="elapsed-display">00:00</span>
+          </div>
+        </div>
+
+        <div id="lead-text" class="lead-announcement lead-tie" aria-live="polite">
+          Scores are level
+        </div>
+
+        <!-- SVG Arena Visual -->
+        <div class="svg-stage-wrapper">
+          <div id="winner-banner" class="winner-banner-stage" role="status">
+            🏆 Blue Team Wins!
+          </div>
+          <div id="arena-instant-badge" class="instant-victory-badge" style="display: none; position: absolute; top: 22%; left: 50%; transform: translateX(-50%); z-index: 9; white-space: nowrap;">
+            ⚡ PERFECT RUN — SUDDEN VICTORY! ⚡
+          </div>
+
+          <!-- Countdown Overlay -->
+          <div id="countdown-overlay" class="countdown-overlay" aria-hidden="true">
+            <div id="countdown-display" class="countdown-number">3</div>
+          </div>
+
+          <!-- Start Match Screen Overlay -->
+          <div id="arena-start-overlay" class="arena-card-overlay" role="region" aria-label="Start Match Screen">
+            <div class="arena-action-card">
+              <div class="arena-card-badge">⚔️ READY TO PLAY</div>
+              <h2 class="arena-card-title">Math Tug of War</h2>
+              <p class="arena-card-desc">Solve math problems accurately to pull the rope towards your side. First team to pull the rope across wins!</p>
+              <div class="arena-card-actions">
+                <button id="btn-arena-start" class="btn btn-hero-start" type="button" aria-label="Start Match">
+                  <span aria-hidden="true">▶️</span> Start Match
+                </button>
+                <button id="btn-arena-options" class="btn btn-hero-options" type="button" aria-label="Open Game Options">
+                  <span aria-hidden="true">⚙️</span> Options
+                </button>
+              </div>
+              <div class="arena-card-hint">Click Start Match when both teams are ready</div>
+            </div>
+          </div>
+
+          <!-- Match On Hold Screen Overlay -->
+          <div id="arena-hold-overlay" class="arena-card-overlay" style="display: none;" role="region" aria-label="Match On Hold Screen">
+            <div class="arena-action-card hold-card">
+              <div class="arena-card-badge hold-badge">⏸️ MATCH ON HOLD</div>
+              <h2 class="arena-card-title">Match Paused</h2>
+              <p class="arena-card-desc">Timers and keypads are temporarily held. Ready to continue?</p>
+              <div class="arena-card-actions">
+                <button id="btn-arena-resume" class="btn btn-hero-resume" type="button" aria-label="Resume Match">
+                  <span aria-hidden="true">▶️</span> Resume
+                </button>
+                <button id="btn-arena-stop" class="btn btn-hero-stop" type="button" aria-label="End Match and Show Results">
+                  <span aria-hidden="true">⏹️</span> End Match
+                </button>
+                <button id="btn-arena-reset" class="btn btn-hero-reset" type="button" aria-label="Reset Match">
+                  <span aria-hidden="true">🔄</span> Reset
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <svg class="arena-svg" viewBox="0 0 1000 420" preserveAspectRatio="xMidYMid meet" aria-label="Tug-of-war battle arena with Blue Team and Red Team pulling rope over center mud puddle">
+            <defs>
+              <!-- Arena Flooring Gradient -->
+              <radialGradient id="arenaFloorGrad" cx="50%" cy="30%" r="70%">
+                <stop offset="0%" stop-color="#f8fafc" />
+                <stop offset="70%" stop-color="#e2e8f0" />
+                <stop offset="100%" stop-color="#cbd5e1" />
+              </radialGradient>
+
+              <!-- Center Mud Gradient -->
+              <linearGradient id="mudGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#854d0e" />
+                <stop offset="40%" stop-color="#713f12" />
+                <stop offset="100%" stop-color="#542d10" />
+              </linearGradient>
+
+              <!-- Team Card Clip Paths with smooth modern rounded corners -->
+              <clipPath id="blueTeamCardClip">
+                <rect x="20" y="130" width="320" height="265" rx="16" ry="16" />
+              </clipPath>
+              <clipPath id="redTeamCardClip">
+                <rect x="660" y="130" width="320" height="265" rx="16" ry="16" />
+              </clipPath>
+
+              <!-- Shadows and Glow Filters -->
+              <filter id="teamCardShadow" x="-10%" y="-10%" width="130%" height="130%">
+                <feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="#0f172a" flood-opacity="0.25" />
+              </filter>
+              <filter id="badgeGlowBlue" x="-20%" y="-20%" width="140%" height="140%">
+                <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#2563eb" flood-opacity="0.35" />
+              </filter>
+              <filter id="badgeGlowRed" x="-20%" y="-20%" width="140%" height="140%">
+                <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#dc2626" flood-opacity="0.35" />
+              </filter>
+              <radialGradient id="goldRingGrad" cx="40%" cy="30%" r="70%">
+                <stop offset="0%" stop-color="#fef08a" />
+                <stop offset="50%" stop-color="#facc15" />
+                <stop offset="100%" stop-color="#ca8a04" />
+              </radialGradient>
+            </defs>
+
+            <!-- Clean Neutral Studio Floor and Backdrop (Static Ground) -->
+            <rect x="0" y="0" width="1000" height="420" fill="url(#arenaFloorGrad)" />
+            <!-- Soft Studio Horizon / Perspective floor demarcation (Static) -->
+            <path d="M0,175 L1000,175 L1000,420 L0,420 Z" fill="#e2e8f0" opacity="0.45" />
+            <line x1="0" y1="175" x2="1000" y2="175" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="8,6" opacity="0.8" />
+
+            <!-- Mud Pit in Center of Arena (STATIC SURFACE - stays fixed in place) -->
+            <g id="mud-puddle-group">
+              <!-- Outer mud edge -->
+              <path d="M 330,320 C 305,285 350,265 420,265 C 470,263 530,266 570,278 C 620,290 690,295 695,325 C 700,358 640,378 590,380 C 540,382 510,392 480,394 C 440,396 410,384 375,378 C 325,372 310,345 330,320 Z" fill="url(#mudGrad)" stroke="#542d10" stroke-width="2.5" />
+              <!-- Inner moist mud core -->
+              <path d="M 355,322 C 335,298 370,278 428,276 C 472,274 522,276 562,288 C 608,300 668,306 672,328 C 676,350 625,368 580,370 C 535,372 510,382 480,384 C 445,386 415,376 385,370 C 342,362 332,340 355,322 Z" fill="#542d10" />
+              <!-- Subtle mud sheen / reflections -->
+              <ellipse cx="430" cy="305" rx="40" ry="9" fill="#a16207" opacity="0.65" />
+              <ellipse cx="560" cy="320" rx="45" ry="11" fill="#a16207" opacity="0.65" />
+              <!-- Splatter Droplets -->
+              <circle cx="308" cy="342" r="7.5" fill="#713f12" />
+              <circle cx="328" cy="365" r="5" fill="#713f12" />
+              <ellipse cx="712" cy="336" rx="8.5" ry="5.5" fill="#713f12" />
+              <circle cx="682" cy="362" r="6" fill="#713f12" />
+              <circle cx="725" cy="355" r="4.5" fill="#713f12" />
+
+              <!-- Center White Demarcation Line -->
+              <line x1="500" y1="245" x2="500" y2="402" stroke="#ffffff" stroke-width="5.5" stroke-linecap="round" />
+            </g>
+
+            <!-- Dynamic Pulling Group (Children Images + Middle Rope + Center Ribbon) -->
+            <!-- ONLY this group moves based on score / correct answers -->
+            <g id="tug-action-group" transform="translate(0, 0)">
+              <!-- Blue Team: Realistic Children Pulling Rope (Left Team) -->
+              <g id="blue-team-svg-group" class="char-idle-bob" transform="translate(0, 0)">
+                <!-- Backing panel & drop shadow -->
+                <rect id="blue-team-card-bg" x="20" y="130" width="320" height="265" rx="16" ry="16" fill="#f8fafc" filter="url(#teamCardShadow)" />
+                <!-- Children pulling rope from user reference image or custom uploaded photo -->
+                <image id="team-blue-svg-img" href="/assets/team_blue.png" x="20" y="130" width="320" height="265" preserveAspectRatio="xMidYMid slice" clip-path="url(#blueTeamCardClip)" />
+                <!-- Vibrant Team Blue Border Frame -->
+                <rect x="20" y="130" width="320" height="265" rx="16" ry="16" fill="none" stroke="#2563eb" stroke-width="3.5" />
+                <!-- Team Blue Ribbon Badge Header -->
+                <g transform="translate(180, 116)">
+                  <rect x="-75" y="-14" width="150" height="28" rx="14" fill="#2563eb" stroke="#1d4ed8" stroke-width="2" filter="url(#badgeGlowBlue)" />
+                  <text id="team-blue-svg-label" x="0" y="5" text-anchor="middle" fill="#ffffff" font-weight="800" font-size="12" font-family="system-ui, sans-serif" letter-spacing="0.6">BLUE TEAM</text>
+                </g>
+              </g>
+
+              <!-- Red Team: Realistic Children Pulling Rope (Right Team) -->
+              <g id="red-team-svg-group" class="char-idle-bob" transform="translate(0, 0)">
+                <!-- Backing panel & drop shadow -->
+                <rect id="red-team-card-bg" x="660" y="130" width="320" height="265" rx="16" ry="16" fill="#f8fafc" filter="url(#teamCardShadow)" />
+                <!-- Children pulling rope from user reference image or custom uploaded photo -->
+                <image id="team-red-svg-img" href="/assets/team_red.png" x="660" y="130" width="320" height="265" preserveAspectRatio="xMidYMid slice" clip-path="url(#redTeamCardClip)" />
+                <!-- Vibrant Team Red Border Frame -->
+                <rect x="660" y="130" width="320" height="265" rx="16" ry="16" fill="none" stroke="#dc2626" stroke-width="3.5" />
+                <!-- Team Red Ribbon Badge Header -->
+                <g transform="translate(820, 116)">
+                  <rect x="-75" y="-14" width="150" height="28" rx="14" fill="#dc2626" stroke="#b91c1c" stroke-width="2" filter="url(#badgeGlowRed)" />
+                  <text id="team-red-svg-label" x="0" y="5" text-anchor="middle" fill="#ffffff" font-weight="800" font-size="12" font-family="system-ui, sans-serif" letter-spacing="0.6">RED TEAM</text>
+                </g>
+              </g>
+
+              <!-- Prominent Middle Rope (320px wide span over the static mud pit for high movement visibility) -->
+              <g id="rope-svg-group">
+                <!-- Drop shadow on the ground & mud -->
+                <path d="M 338,352 Q 500,360 662,352" stroke="rgba(0,0,0,0.24)" stroke-width="12" stroke-linecap="round" fill="none" />
+                <!-- Thick Twisted Rope Core -->
+                <path d="M 336,222 L 664,222" stroke="#b45309" stroke-width="18" stroke-linecap="round" fill="none" />
+                <path d="M 336,222 L 664,222" stroke="#d97706" stroke-width="15" stroke-linecap="round" fill="none" />
+                <!-- Braided Texture Details -->
+                <path d="M 336,220 L 664,220" stroke="#fef08a" stroke-width="4.5" stroke-dasharray="10,7" stroke-linecap="round" fill="none" opacity="0.85" />
+                <path d="M 336,224 L 664,224" stroke="#78350f" stroke-width="3.5" stroke-dasharray="8,8" stroke-linecap="round" fill="none" opacity="0.6" />
+
+                <!-- High-Visibility Center Red Ribbon Marker (Tied directly at center x=500, y=222) -->
+                <g id="ribbon-marker" transform="translate(500, 222)">
+                  <!-- Fluttering Red Ribbon Tails with White Core -->
+                  <polygon points="0,0 -16,42 -4,34" fill="#dc2626" stroke="#991b1b" stroke-width="2" />
+                  <polygon points="0,0 16,42 4,34" fill="#ef4444" stroke="#991b1b" stroke-width="2" />
+                  <polygon points="0,0 -3,38 3,38" fill="#ffffff" opacity="0.8" />
+                  <!-- Downward Pointer Arrow for Center Demarcation -->
+                  <polygon points="0,10 -7,22 7,22" fill="#facc15" stroke="#a16207" stroke-width="1.5" />
+                  <!-- Heavy Gold Rope Knot Ring -->
+                  <circle cx="0" cy="0" r="10" fill="url(#goldRingGrad)" stroke="#a16207" stroke-width="2.5" />
+                  <circle cx="0" cy="0" r="5" fill="#fef08a" stroke="#ca8a04" stroke-width="1.5" />
+                  <circle cx="0" cy="0" r="2.5" fill="#ffffff" />
+                </g>
+              </g>
+            </g>
+
+            <!-- Mud Splash Burst Particles (Dynamic) -->
+            <g id="mud-splash-particles" opacity="0" pointer-events="none">
+              <circle cx="480" cy="340" r="7" fill="#713f12" />
+              <circle cx="520" cy="335" r="8" fill="#542d10" />
+              <circle cx="460" cy="320" r="5" fill="#854d0e" />
+              <circle cx="540" cy="315" r="6" fill="#854d0e" />
+              <circle cx="500" cy="310" r="5" fill="#713f12" />
+            </g>
+          </svg>
+        </div>
+      </section>
+
+      <!-- Red Team Column -->
+      <section id="red-panel" class="team-panel red-theme" aria-labelledby="red-team-heading">
+        <div class="team-header">
+          <div class="team-name-badge">
+            <span aria-hidden="true">🔴</span>
+            <span id="red-display-name">Red Team</span>
+          </div>
+          <div class="team-score-badge">
+            Score: <span id="red-score">0</span>
+          </div>
+        </div>
+
+        <div class="progress-timer-row">
+          <span id="red-progress-label">Question 1 of 15</span>
+          <span id="red-timer" class="timer-badge" aria-label="Red Team question timer">⏱️ 15s</span>
+        </div>
+
+        <div class="question-card">
+          <div id="red-question-expr" class="math-expression">...</div>
+          <div class="answer-preview">
+            <span id="red-input-text"></span>
+            <span id="red-placeholder" class="answer-placeholder">Your answer</span>
+          </div>
+          <div id="red-feedback" class="feedback-banner"></div>
+        </div>
+
+        <!-- Keypad -->
+        <div class="keypad-grid" role="group" aria-label="Red Team Number Keypad">
+          <button type="button" class="key-btn red-key" data-team="red" data-val="1">1</button>
+          <button type="button" class="key-btn red-key" data-team="red" data-val="2">2</button>
+          <button type="button" class="key-btn red-key" data-team="red" data-val="3">3</button>
+          <button type="button" class="key-btn red-key" data-team="red" data-val="4">4</button>
+          <button type="button" class="key-btn red-key" data-team="red" data-val="5">5</button>
+          <button type="button" class="key-btn red-key" data-team="red" data-val="6">6</button>
+          <button type="button" class="key-btn red-key" data-team="red" data-val="7">7</button>
+          <button type="button" class="key-btn red-key" data-team="red" data-val="8">8</button>
+          <button type="button" class="key-btn red-key" data-team="red" data-val="9">9</button>
+          <button type="button" class="key-btn util-key red-key" data-team="red" data-action="clear">Clear</button>
+          <button type="button" class="key-btn red-key" data-team="red" data-val="0">0</button>
+          <button type="button" class="key-btn util-key red-key" data-team="red" data-action="backspace">⌫</button>
+        </div>
+
+        <div id="red-sign-row" style="display: none; margin-top: 0.25rem;">
+          <button type="button" class="key-btn util-key red-key" style="width: 100%;" data-team="red" data-action="sign">± Toggle Negative</button>
+        </div>
+
+        <div class="action-row">
+          <button id="red-btn-submit" type="button" class="btn btn-submit" disabled>Submit</button>
+          <button id="red-btn-skip" type="button" class="btn btn-skip" disabled>Skip</button>
+        </div>
+
+        <div class="team-stats-row">
+          <span class="stat-pill">✓ <span id="red-stat-correct">0</span></span>
+          <span class="stat-pill">✗ <span id="red-stat-incorrect">0</span></span>
+          <span class="stat-pill">⏭ <span id="red-stat-skipped">0</span></span>
+          <span class="stat-pill">⌛ <span id="red-stat-timeout">0</span></span>
+          <span id="red-status-tag" style="font-weight: 700;">Ready</span>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <span>Created by <a href="https://github.com/KashyapMak" target="_blank" rel="noopener noreferrer" style="font-weight: 700; color: inherit; text-decoration: underline;">Kashyap Makadia</a></span>
+    <span>&copy; <span id="copy-year">2026</span> Math Tug of War</span>
+    <a href="https://www.linkedin.com/in/kashyapmakadia" target="_blank" rel="noopener noreferrer" aria-label="Kashyap Makadia on LinkedIn">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style="vertical-align: -2px;"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 8.76c.92 0 1.66-.74 1.66-1.66s-.74-1.66-1.66-1.66c-.92 0-1.66.74-1.66 1.66 0 .92.74 1.66 1.66 1.66m1.39 9.74v-8.37H5.07v8.37h2.78z"/></svg> LinkedIn
+    </a>
+    <a href="https://github.com/KashyapMak" target="_blank" rel="noopener noreferrer" aria-label="Kashyap Makadia on GitHub">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style="vertical-align: -2px;"><path d="M12 2A10 10 0 0 0 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.1-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.92 0-1.11.38-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.65.71 1.03 1.6 1.03 2.71 0 3.82-2.34 4.66-4.57 4.91.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0 0 12 2z"/></svg> GitHub
+    </a>
+  </footer>
+
+  <!-- ================= Configuration Modal ================= -->
+  <div id="modal-config" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="config-modal-title">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h2 id="config-modal-title">Game Options &amp; Setup</h2>
+        <button id="btn-close-config" class="btn" aria-label="Close configuration">✕</button>
+      </div>
+      <div class="modal-body">
+        <!-- Tab navigation -->
+        <div class="modal-tab-bar" role="tablist" aria-label="Configuration Sections">
+          <button type="button" class="modal-tab-btn active" role="tab" id="tab-btn-team" aria-selected="true" aria-controls="tab-content-team">
+            👥 Team
+          </button>
+          <button type="button" class="modal-tab-btn" role="tab" id="tab-btn-game" aria-selected="false" aria-controls="tab-content-game">
+            ⚙️ Game Setup
+          </button>
+        </div>
+
+        <!-- Tab 1: Team -->
+        <div id="tab-content-team" class="modal-tab-pane" role="tabpanel" aria-labelledby="tab-btn-team">
+          <!-- Team Names -->
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="cfg-blue-name">Blue Team Name</label>
+              <input type="text" id="cfg-blue-name" maxlength="24" value="Blue Team" />
+            </div>
+            <div class="form-group">
+              <label for="cfg-red-name">Red Team Name</label>
+              <input type="text" id="cfg-red-name" maxlength="24" value="Red Team" />
+            </div>
+          </div>
+
+          <!-- Team Photos & Custom Selection -->
+          <div class="form-group" style="margin-top: 0.25rem;">
+            <label style="display: flex; justify-content: space-between; align-items: center;">
+              <span>Team Photos &amp; Avatars</span>
+              <span style="font-size: 0.75rem; font-weight: 500; color: #64748b;">Upload custom photo or keep cartoon default</span>
+            </label>
+            <div class="team-photo-select-grid">
+              <!-- Blue Team Photo Picker -->
+              <div class="team-photo-card blue-card-picker" id="modal-blue-photo-card">
+                <div class="photo-preview-wrapper">
+                  <img id="cfg-blue-photo-preview" class="photo-preview-thumb" src="/assets/team_blue.png" alt="Blue Team Photo Preview" />
+                  <span id="cfg-blue-photo-badge" class="photo-badge default">Default Cartoon</span>
+                </div>
+                <div class="photo-picker-controls">
+                  <strong id="cfg-blue-photo-name-display" style="font-size: 0.85rem; color: #1e3a8a;">Blue Team</strong>
+                  <p style="font-size: 0.75rem; color: #64748b; margin: 0.15rem 0 0.4rem 0;">Drop photo here or choose file</p>
+                  <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+                    <button type="button" id="cfg-blue-photo-btn" class="btn btn-sm btn-photo-upload" aria-label="Select Blue Team Photo">
+                      📷 Choose Photo
+                    </button>
+                    <button type="button" id="cfg-blue-photo-reset" class="btn btn-sm btn-photo-reset" style="display: none;" aria-label="Reset Blue Team to Default Cartoon">
+                      ↺ Reset
+                    </button>
+                  </div>
+                  <input type="file" id="cfg-blue-photo-file" accept="image/*" style="display: none;" />
+                </div>
+              </div>
+
+              <!-- Red Team Photo Picker -->
+              <div class="team-photo-card red-card-picker" id="modal-red-photo-card">
+                <div class="photo-preview-wrapper">
+                  <img id="cfg-red-photo-preview" class="photo-preview-thumb" src="/assets/team_red.png" alt="Red Team Photo Preview" />
+                  <span id="cfg-red-photo-badge" class="photo-badge default">Default Cartoon</span>
+                </div>
+                <div class="photo-picker-controls">
+                  <strong id="cfg-red-photo-name-display" style="font-size: 0.85rem; color: #991b1b;">Red Team</strong>
+                  <p style="font-size: 0.75rem; color: #64748b; margin: 0.15rem 0 0.4rem 0;">Drop photo here or choose file</p>
+                  <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+                    <button type="button" id="cfg-red-photo-btn" class="btn btn-sm btn-photo-upload" aria-label="Select Red Team Photo">
+                      📷 Choose Photo
+                    </button>
+                    <button type="button" id="cfg-red-photo-reset" class="btn btn-sm btn-photo-reset" style="display: none;" aria-label="Reset Red Team to Default Cartoon">
+                      ↺ Reset
+                    </button>
+                  </div>
+                  <input type="file" id="cfg-red-photo-file" accept="image/*" style="display: none;" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 2: Game Setup -->
+        <div id="tab-content-game" class="modal-tab-pane hidden" role="tabpanel" aria-labelledby="tab-btn-game">
+          <!-- Question Count & Operation -->
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="cfg-question-count">Questions per Team (1–100)</label>
+              <input type="number" id="cfg-question-count" min="1" max="100" value="15" />
+            </div>
+            <div class="form-group">
+              <label for="cfg-operation">Math Operation</label>
+              <select id="cfg-operation">
+                <option value="addition">Addition (+)</option>
+                <option value="subtraction">Subtraction (−)</option>
+                <option value="multiplication">Multiplication (×)</option>
+                <option value="division">Division (÷)</option>
+                <option value="mixed" selected>Mixed Operations</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Mixed Ops Checkboxes -->
+          <div id="mixed-ops-group" class="form-group" style="background: #f8fafc; padding: 0.6rem; border-radius: var(--radius-sm); border: 1px solid #e2e8f0;">
+            <label>Include in Mixed Mode:</label>
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.25rem;">
+              <label class="form-check"><input type="checkbox" id="mix-add" checked /> Addition</label>
+              <label class="form-check"><input type="checkbox" id="mix-sub" checked /> Subtraction</label>
+              <label class="form-check"><input type="checkbox" id="mix-mul" checked /> Multiplication</label>
+              <label class="form-check"><input type="checkbox" id="mix-div" checked /> Division</label>
+            </div>
+          </div>
+
+          <!-- Operation Specific Settings -->
+          <div id="cfg-section-digits" class="form-row-2">
+            <div class="form-group">
+              <label for="cfg-digits">Operand Digits (1–4)</label>
+              <select id="cfg-digits">
+                <option value="1">1 Digit (0–9)</option>
+                <option value="2" selected>2 Digits (10–99)</option>
+                <option value="3">3 Digits (100–999)</option>
+                <option value="4">4 Digits (1000–9999)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="cfg-carrying">Addition Carrying</label>
+              <select id="cfg-carrying">
+                <option value="any" selected>Any</option>
+                <option value="require">Carry Required</option>
+                <option value="none">No Carrying</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="cfg-section-sub" class="form-row-2">
+            <div class="form-group">
+              <label for="cfg-borrowing">Subtraction Borrowing</label>
+              <select id="cfg-borrowing">
+                <option value="any" selected>Any</option>
+                <option value="require">Borrow Required</option>
+                <option value="none">No Borrowing</option>
+              </select>
+            </div>
+            <div class="form-group" style="justify-content: flex-end;">
+              <label class="form-check" style="margin-bottom: 0.35rem;">
+                <input type="checkbox" id="cfg-allow-negative" />
+                Allow Negative Answers
+              </label>
+            </div>
+          </div>
+
+          <!-- Multiplication & Division ranges -->
+          <div id="cfg-section-mul" class="form-row-2">
+            <div class="form-group">
+              <label for="cfg-mul-min">Multiplication Min Factor</label>
+              <input type="number" id="cfg-mul-min" min="1" max="20" value="1" />
+            </div>
+            <div class="form-group">
+              <label for="cfg-mul-max">Multiplication Max Factor</label>
+              <input type="number" id="cfg-mul-max" min="1" max="25" value="12" />
+            </div>
+          </div>
+
+          <div id="cfg-section-div" class="form-row-2">
+            <div class="form-group">
+              <label for="cfg-div-min">Division Min Divisor</label>
+              <input type="number" id="cfg-div-min" min="1" max="20" value="1" />
+            </div>
+            <div class="form-group">
+              <label for="cfg-div-max">Division Max Divisor</label>
+              <input type="number" id="cfg-div-max" min="1" max="25" value="12" />
+            </div>
+          </div>
+
+          <!-- Timing Mode -->
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="cfg-timing-mode">Timing Mode</label>
+              <select id="cfg-timing-mode">
+                <option value="timed" selected>Timed Questions</option>
+                <option value="untimed">No Time Limit</option>
+              </select>
+            </div>
+            <div class="form-group" id="cfg-timer-group">
+              <label for="cfg-timer-seconds">Seconds per Question (5–120)</label>
+              <input type="number" id="cfg-timer-seconds" min="5" max="120" value="15" />
+            </div>
+          </div>
+
+          <!-- Scoring Config -->
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="cfg-score-correct">Correct Answer Points</label>
+              <input type="number" id="cfg-score-correct" value="1" min="1" max="10" />
+            </div>
+            <div class="form-group">
+              <label for="cfg-score-skip">Skip Penalty Points</label>
+              <input type="number" id="cfg-score-skip" value="-1" min="-10" max="0" />
+            </div>
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="cfg-score-incorrect">Incorrect Penalty Points</label>
+              <input type="number" id="cfg-score-incorrect" value="0" min="-10" max="0" />
+            </div>
+            <div class="form-group">
+              <label for="cfg-score-timeout">Timeout Penalty Points</label>
+              <input type="number" id="cfg-score-timeout" value="0" min="-10" max="0" />
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 1.5rem; flex-wrap: wrap;">
+            <label class="form-check">
+              <input type="checkbox" id="cfg-negative-scoring" />
+              Enable Negative Scoring (Allow scores below 0)
+            </label>
+            <label class="form-check">
+              <input type="checkbox" id="cfg-answer-feedback" checked />
+              Show Answer Feedback
+            </label>
+          </div>
+
+          <div id="cfg-error-banner" class="error-msg"></div>
+
+          <div class="config-summary-box" id="cfg-summary-text">
+            15 questions per team, mixed operations, 2 digits, timed mode (15s), correct +1, skip -1.
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-cancel-config" class="btn">Cancel</button>
+        <button id="btn-start-game" class="btn btn-primary" style="padding: 0.6rem 1.4rem;">Start Game</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= Rules Modal ================= -->
+  <div id="modal-rules" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="rules-modal-title">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h2 id="rules-modal-title">Math Tug of War Rules</h2>
+        <button id="btn-close-rules" class="btn" aria-label="Close rules">✕</button>
+      </div>
+      <div class="modal-body" style="font-size: 0.92rem; line-height: 1.6; color: #334155;">
+        <p><strong>Overview:</strong> Math Tug of War is a two-team, same-screen mathematical battle. Blue Team plays on the left, and Red Team plays on the right.</p>
+        
+        <h3 style="font-size: 1.05rem; font-weight: 700; color: #0f172a; margin-top: 0.5rem;">🎮 How to Play</h3>
+        <ul style="padding-left: 1.25rem; display: flex; flex-direction: column; gap: 0.35rem;">
+          <li>Both teams solve questions independently on their own numeric keypads.</li>
+          <li>Enter your answer using the keypad buttons and click <strong>Submit</strong>.</li>
+          <li>If you are stuck, you may click <strong>Skip</strong> (penalty applies if configured).</li>
+          <li>In <em>Timed Mode</em>, each question has an independent timer. If it expires, timeout penalties apply and you advance automatically.</li>
+        </ul>
+
+        <h3 style="font-size: 1.05rem; font-weight: 700; color: #0f172a; margin-top: 0.5rem;">🪢 The Rope &amp; Scoring</h3>
+        <ul style="padding-left: 1.25rem; display: flex; flex-direction: column; gap: 0.35rem;">
+          <li>The central tug-of-war ribbon moves toward the team that currently leads in score.</li>
+          <li>If scores are level, the ribbon stays aligned with the white center line.</li>
+          <li>Unless negative scoring is enabled, team scores cannot fall below 0.</li>
+        </ul>
+
+        <h3 style="font-size: 1.05rem; font-weight: 700; color: #0f172a; margin-top: 0.5rem;">🏆 Winning the Match</h3>
+        <ul style="padding-left: 1.25rem; display: flex; flex-direction: column; gap: 0.35rem;">
+          <li><strong>Instant Victory (Perfect Run):</strong> If a team answers all questions with 100% accuracy and NO skips before the opposing team finishes, they win immediately!</li>
+          <li>Otherwise, both teams play until finished, and the team with the highest final score wins. If scores are equal, the match is a draw!</li>
+        </ul>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-ok-rules" class="btn btn-primary">Got It!</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= Results Modal ================= -->
+  <div id="modal-results" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="results-modal-title">
+    <div class="modal-dialog" style="max-width: 640px;">
+      <div class="modal-header">
+        <h2 id="results-modal-title">Match Results</h2>
+      </div>
+      <div class="modal-body">
+        <div id="results-winner-text" style="text-align: center; font-size: 1.6rem; font-weight: 900; color: #1e293b; padding: 0.5rem 0;">
+          🏆 Blue Team Wins!
+        </div>
+        <div id="results-perfect-badge" class="instant-victory-badge" style="display: none;"></div>
+        <p id="results-rope-summary" style="text-align: center; font-size: 0.95rem; color: #64748b; font-weight: 600;"></p>
+
+        <table class="results-table" aria-label="Game performance statistics table">
+          <thead>
+            <tr>
+              <th>Metric</th>
+              <th id="th-blue-name" class="blue-cell">Blue Team</th>
+              <th id="th-red-name" class="red-cell">Red Team</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Final Score</strong></td>
+              <td id="res-blue-score" class="blue-cell">0</td>
+              <td id="res-red-score" class="red-cell">0</td>
+            </tr>
+            <tr>
+              <td>Correct Answers</td>
+              <td id="res-blue-correct">0</td>
+              <td id="res-red-correct">0</td>
+            </tr>
+            <tr>
+              <td>Incorrect Answers</td>
+              <td id="res-blue-incorrect">0</td>
+              <td id="res-red-incorrect">0</td>
+            </tr>
+            <tr>
+              <td>Skipped Questions</td>
+              <td id="res-blue-skipped">0</td>
+              <td id="res-red-skipped">0</td>
+            </tr>
+            <tr>
+              <td>Timed-out Questions</td>
+              <td id="res-blue-timeout">0</td>
+              <td id="res-red-timeout">0</td>
+            </tr>
+            <tr>
+              <td>Accuracy (Correct / Answered)</td>
+              <td id="res-blue-accuracy">0%</td>
+              <td id="res-red-accuracy">0%</td>
+            </tr>
+            <tr>
+              <td>Avg. Response Time</td>
+              <td id="res-blue-avg-time">0.0s</td>
+              <td id="res-red-avg-time">0.0s</td>
+            </tr>
+            <tr>
+              <td>Total Match Time</td>
+              <td colspan="2" id="res-total-time" style="text-align: center; font-weight: 700;">00:00</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="modal-footer" style="justify-content: space-between;">
+        <button id="btn-res-options" class="btn">Change Settings</button>
+        <div style="display: flex; gap: 0.5rem;">
+          <button id="btn-res-reset" class="btn" style="color: #b91c1c;">Reset</button>
+          <button id="btn-res-playagain" class="btn btn-primary">Play Again</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript Game Engine -->
+  <script type="module" src="/src/game.js"></script>
+</body>
+</html>
