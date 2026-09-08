@@ -437,8 +437,8 @@
   }
 
   // --- Team Photos Management ---
-  const DEFAULT_BLUE_PHOTO = '/assets/team_blue.png';
-  const DEFAULT_RED_PHOTO = '/assets/team_red.png';
+  const DEFAULT_BLUE_PHOTO = './assets/team_blue.png';
+  const DEFAULT_RED_PHOTO = './assets/team_red.png';
 
   function getTeamPhotoUrl(team) {
     if (team === 'blue') {

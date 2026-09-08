@@ -1,5 +1,5 @@
 {
-  "name": "Math Tug of War",
+  "name": "Tug War of Math",
   "description": "A two-team, same-screen mathematics competition with an animated central tug-of-war arena, configurable operations, independent question flows, and responsive controls.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
