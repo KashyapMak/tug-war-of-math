@@ -94,26 +94,21 @@ This repository includes an automated workflow file in [`.github/workflows/deplo
 2. In your GitHub repository, navigate to:
    - **Settings** → **Pages** (in the left sidebar).
 3. Under **Build and deployment**:
-   - Set **Source** to **GitHub Actions**.
-4. That's it! Every time you push to `main`, GitHub Actions will automatically install dependencies, run `npm run build`, and deploy the `dist` folder to your GitHub Pages URL:
+   - Change **Source** from *Deploy from a branch* to **GitHub Actions**.
+4. That's it! GitHub Actions will trigger automatically, run `npm run build`, and deploy the optimized production bundle to:
    ```
    https://<username>.github.io/<repository-name>/
    ```
 
-### Method 2: Deploying from the `dist` Directory
+### Method 2: Direct Deployment from `main / (root)` (Zero-Build)
 
-If you prefer deploying built files directly:
+If you keep your GitHub Pages **Source** set to **Deploy from a branch** with `Branch: main / (root)` (as shown in your Pages settings):
 
-1. Build the production files:
-   ```bash
-   npm run build
-   ```
-2. In GitHub repository **Settings** → **Pages**:
-   - Choose **Deploy from a branch**.
-   - Select your deployment branch (e.g. `gh-pages` or `main`) and root or `/docs` folder.
+- The project is configured with relative paths (`./src/style.css`, `./src/game.js`, `./assets/...`) and `.nojekyll` at the repository root.
+- Simply commit and push your latest code to the `main` branch, and GitHub Pages will serve the game directly without requiring a build step.
 
-> **Note on Base URL**:
-> The `vite.config.ts` configuration has `base: './'` enabled, ensuring all script, style, and image paths are relative. This allows the game to function properly whether hosted at the root domain (`https://example.com/`) or within a repository subfolder path (`https://<username>.github.io/<repo-name>/`).
+> **Note on Base URL & Relative Paths**:
+> All asset paths in `index.html` and `vite.config.ts` use relative paths (`./`). This ensures that whether you deploy via GitHub Actions, serve directly from the `main` root, or host under a subpath like `https://kashyapmak.github.io/tug-war-of-math/`, all CSS, JS, and image assets load properly without 404 errors.
 
 ---
 
