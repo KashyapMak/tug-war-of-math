@@ -2,6 +2,8 @@
 
 A fast-paced, two-team same-screen mathematics competition featuring an animated central tug-of-war arena, customizable team names and photo avatars, configurable arithmetic operations, independent question flows, and responsive dual controls.
 
+🎮 **Play Online (Live Demo):** [https://kashyapmak.github.io/tug-war-of-math/](https://kashyapmak.github.io/tug-war-of-math/)
+
 ---
 
 ## 🚀 Features
@@ -97,7 +99,7 @@ This repository includes an automated workflow file in [`.github/workflows/deplo
    - Change **Source** from *Deploy from a branch* to **GitHub Actions**.
 4. That's it! GitHub Actions will trigger automatically, run `npm run build`, and deploy the optimized production bundle to:
    ```
-   https://<username>.github.io/<repository-name>/
+   https://kashyapmak.github.io/tug-war-of-math/
    ```
 
 ### Method 2: Direct Deployment from `main / (root)` (Zero-Build)
